@@ -80,6 +80,9 @@ type Parser struct {
 
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]bool
+
+	// json path to replace with model name (eg. httputil.HTTPError)
+	JsonFilePath map[string]string
 }
 
 // New creates a new Parser with default properties.
@@ -103,6 +106,7 @@ func New(options ...func(*Parser)) *Parser {
 		ParsedSchemas: make(map[*TypeSpecDef]*Schema),
 		OutputSchemas: make(map[*TypeSpecDef]*Schema),
 		excludes:      make(map[string]bool),
+		JsonFilePath:  make(map[string]string),
 	}
 
 	for _, option := range options {
@@ -134,6 +138,9 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
+
+	// parser.JsonFilePath["httputil.HTTPError"] = "example/celler/httputil/error.json"
+
 	Printf("Generate general API Info, search dir:%s", searchDir)
 
 	packageDir, err := getPkgName(searchDir)
@@ -643,6 +650,23 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		parser.swagger.Definitions[s2.Name] = *schema
 	}
 
+	// replace model example with json file
+	if len(parser.JsonFilePath) > 0 {
+		if jsonPath, isModelExist := parser.JsonFilePath[s.Name]; isModelExist {
+			data, err := ioutil.ReadFile(fmt.Sprintf("%s", jsonPath))
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read json file %s error: %s ", jsonPath, err)
+			}
+			var example interface{}
+			err = json.Unmarshal(data, &example)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to unmarshal json %s error: %s ", jsonPath, err)
+			}
+			Printf("Replace %s example with json file: %v\n", s.Name, jsonPath)
+			s.Example = example
+			delete(parser.JsonFilePath, s.Name)
+		}
+	}
 	return s, nil
 }
 

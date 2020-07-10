@@ -65,6 +65,9 @@ type Config struct {
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
+
+	// ModelJSONPaths get flag for modelName and JSON file mapping
+	ModelJSONPaths []string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -80,6 +83,17 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
+
+	modelMap := make(map[string]string)
+	for _, val := range config.ModelJSONPaths {
+		v := strings.SplitN(val, ":", 2)
+		if len(v) < 2 {
+			return fmt.Errorf("not correct format of model json mapping")
+		}
+		fmt.Println(v[0], v[1])
+		modelMap[v[0]] = v[1]
+	}
+	p.JsonFilePath = modelMap
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err

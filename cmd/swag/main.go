@@ -21,6 +21,7 @@ const (
 	markdownFilesFlag    = "markdownFiles"
 	parseInternal        = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	modelJSONFileFlag    = "modelJsonFile"
 )
 
 var initFlags = []cli.Flag{
@@ -74,6 +75,11 @@ var initFlags = []cli.Flag{
 		Name:  "generatedTime",
 		Usage: "Generate timestamp at the top of docs.go, true by default",
 	},
+	&cli.StringSliceFlag{
+		Name:    modelJSONFileFlag,
+		Aliases: []string{"j"},
+		Usage:   "specific model example with json file, format: ${modelName}:${jsonFilePath}",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -96,6 +102,7 @@ func initAction(c *cli.Context) error {
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
 		ParseInternal:      c.Bool(parseInternal),
 		GeneratedTime:      c.Bool(generatedTimeFlag),
+		ModelJSONPaths:     c.StringSlice(modelJSONFileFlag),
 	})
 }
 
